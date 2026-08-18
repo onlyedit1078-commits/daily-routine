@@ -1,294 +1,111 @@
- const STORAGE_KEY = "dailyRoutineData";
-const SETTINGS_KEY = "dailyRoutineSettings";
+<!doctype html>
 
-let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-let settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
-let editingId = null;
+<html lang="en">  
+<head>  
+  <meta charset="utf-8">  
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">  
+  <meta name="theme-color" content="#5b21b6">  
+  <meta name="description" content="Daily Routine planner">  
+  <link rel="manifest" href="manifest.json">  
+  <link rel="icon" href="icons/icon.svg">  
+  <link rel="stylesheet" href="style.css">  
+  <title>DailyRoutine</title>  
+</head>  
+<body>  
+  <div class="app">  
+    <header class="topbar">  
+      <div class="brand">DailyRoutine</div>  
+      <button class="more" id="installBtn" hidden title="Install app">⋮</button>  
+    </header>  <main id="main">  
+  <section class="page" id="homePage">  
+    <div class="today-head">  
+      <div class="calendar-icon">▦</div>  
+      <div>  
+        <h1>Today</h1>  
+        <p id="dateText"></p>  
+      </div>  
+    </div>  
 
-function todayKey() {
-  return new Date().toISOString().slice(0, 10);
-}
+    <section class="card add-card">  
+      <div class="section-title"><span class="plus">+</span> ADD NEW ROUTINE</div>  
+      <form id="routineForm">  
+        <input id="routineName" maxlength="60" placeholder="Routine Name (e.g. Gym, Study)" required>  
+        <div class="time-row">  
+          <input id="startTime" type="time" required>  
+          <input id="endTime" type="time" required>  
+        </div>  
+        <input id="routineNote" maxlength="80" placeholder="Short description (optional)">  
+        <button class="primary" type="submit">SAVE ROUTINE</button>  
+      </form>  
+    </section>  
 
-function saveData() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
+    <section class="list-section">  
+      <div class="section-title list-title">☷ TODAY'S ROUTINES <span id="countLabel"></span></div>  
+      <div id="routineList"></div>  
+      <div id="emptyState" class="empty" hidden>No routines yet. Add your first routine above.</div>  
+    </section>  
 
-function saveSettings() {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-}
+    <section class="card progress-card">  
+      <div>  
+        <div class="progress-title">TODAY PROGRESS</div>  
+        <div class="progress-line">  
+          <div class="bar"><span id="progressBar"></span></div>  
+          <b id="progressText">0 / 0 Completed</b>  
+        </div>  
+      </div>  
+      <div class="donut" id="donut"><span id="percentText">0%</span></div>  
+    </section>  
+  </section>  
 
-function getTodayRoutines() {
-  const key = todayKey();
-  if (!data[key]) data[key] = [];
-  return data[key];
-}
+  <section class="page" id="calendarPage" hidden>  
+    <div class="simple-head"><h2>Calendar</h2><p>Your saved routines by date.</p></div>  
+    <div class="card calendar-card">  
+      <input id="calendarDate" type="date">  
+      <div id="calendarRoutines"></div>  
+    </div>  
+  </section>  
 
-function showPage(pageId) {
-  document.querySelectorAll(".page").forEach(page => {
-    page.hidden = page.id !== pageId;
-  });
+  <section class="page" id="statsPage" hidden>  
+    <div class="simple-head"><h2>Stats</h2><p>Your routine completion overview.</p></div>  
+    <div class="stats-grid">  
+      <div class="card stat"><strong id="totalRoutines">0</strong><span>Total routines</span></div>  
+      <div class="card stat"><strong id="completedRoutines">0</strong><span>Completed</span></div>  
+      <div class="card stat"><strong id="streak">0</strong><span>Best day</span></div>  
+      <div class="card stat"><strong id="avgProgress">0%</strong><span>Overall progress</span></div>  
+    </div>  
+    <div class="card">  
+      <div class="section-title">RECENT DAYS</div>  
+      <div id="recentStats"></div>  
+    </div>  
+  </section>  
 
-  document.querySelectorAll(".nav").forEach(button => {
-    button.classList.toggle("active", button.dataset.page === pageId);
-  });
+  <section class="page" id="settingsPage" hidden>  
+    <div class="simple-head"><h2>Settings</h2><p>Customize your DailyRoutine.</p></div>  
+    <div class="card settings">  
+      <label class="setting-row"><span>Notifications</span><input id="notifications" type="checkbox"></label>  
+      <label class="setting-row"><span>Dark mode</span><input id="darkMode" type="checkbox"></label>  
+      <button class="danger-btn" id="clearData">Delete all routine data</button>  
+    </div>  
+  </section>  
+</main>  
 
-  if (pageId === "homePage") renderHome();
-  if (pageId === "calendarPage") renderCalendar();
-  if (pageId === "statsPage") renderStats();
-  if (pageId === "settingsPage") renderSettings();
-}
+<nav class="bottom-nav">  
+  <button class="nav active" data-page="homePage"><span>⌂</span><small>Home</small></button>  
+  <button class="nav" data-page="calendarPage"><span>▣</span><small>Calendar</small></button>  
+  <button class="nav" data-page="statsPage"><span>▥</span><small>Stats</small></button>  
+  <button class="nav" data-page="settingsPage"><span>⚙</span><small>Settings</small></button>  
+</nav>
 
-// Navigation
-document.querySelectorAll(".nav").forEach(button => {
-  button.addEventListener("click", () => {
-    showPage(button.dataset.page);
-  });
-});
-
-// Date
-function renderDate() {
-  const dateText = document.getElementById("dateText");
-  if (!dateText) return;
-
-  const date = new Date();
-  dateText.textContent = date.toLocaleDateString("en-IN", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric"
-  });
-}
-
-// Add routine
-document.getElementById("routineForm").addEventListener("submit", function (e) {
-  e.preventDefault();
-
-  const routine = {
-    id: Date.now(),
-    name: document.getElementById("routineName").value.trim(),
-    start: document.getElementById("startTime").value,
-    end: document.getElementById("endTime").value,
-    note: document.getElementById("routineNote").value.trim(),
-    completed: false
-  };
-
-  getTodayRoutines().push(routine);
-  saveData();
-
-  this.reset();
-  renderHome();
-});
-
-// Home
-function renderHome() {
-  renderDate();
-
-  const routines = getTodayRoutines();
-  const list = document.getElementById("routineList");
-  const empty = document.getElementById("emptyState");
-  const count = document.getElementById("countLabel");
-
-  count.textContent = `(${routines.length})`;
-  list.innerHTML = "";
-
-  empty.hidden = routines.length !== 0;
-
-  routines.forEach(routine => {
-    const item = document.createElement("div");
-    item.className = "card routine-item";
-
-    item.innerHTML = `
-      <div>
-        <strong>${escapeHTML(routine.name)}</strong>
-        <div>${routine.start} - ${routine.end}</div>
-        ${routine.note ? `<small>${escapeHTML(routine.note)}</small>` : ""}
-      </div>
-
-      <div>
-        <button class="complete-btn">${routine.completed ? "✓" : "Complete"}</button>
-        <button class="edit-btn">Edit</button>
-        <button class="delete-btn">Delete</button>
-      </div>
-    `;
-
-    item.querySelector(".complete-btn").addEventListener("click", () => {
-      routine.completed = !routine.completed;
-      saveData();
-      renderHome();
-    });
-
-    item.querySelector(".edit-btn").addEventListener("click", () => {
-      openEdit(routine);
-    });
-
-    item.querySelector(".delete-btn").addEventListener("click", () => {
-      if (confirm("Delete this routine?")) {
-        const index = routines.findIndex(r => r.id === routine.id);
-        routines.splice(index, 1);
-        saveData();
-        renderHome();
-      }
-    });
-
-    list.appendChild(item);
-  });
-
-  updateProgress(routines);
-}
-
-function updateProgress(routines) {
-  const total = routines.length;
-  const completed = routines.filter(r => r.completed).length;
-  const percent = total ? Math.round((completed / total) * 100) : 0;
-
-  document.getElementById("progressText").textContent =
-    `${completed} / ${total} Completed`;
-
-  document.getElementById("percentText").textContent = `${percent}%`;
-  document.getElementById("progressBar").style.width = `${percent}%`;
-}
-
-// Edit routine
-function openEdit(routine) {
-  editingId = routine.id;
-
-  document.getElementById("editName").value = routine.name;
-  document.getElementById("editStart").value = routine.start;
-  document.getElementById("editEnd").value = routine.end;
-  document.getElementById("editNote").value = routine.note || "";
-
-  document.getElementById("editDialog").showModal();
-}
-
-document.getElementById("editForm").addEventListener("submit", function (e) {
-  e.preventDefault();
-
-  const routines = getTodayRoutines();
-  const routine = routines.find(r => r.id === editingId);
-
-  if (routine) {
-    routine.name = document.getElementById("editName").value.trim();
-    routine.start = document.getElementById("editStart").value;
-    routine.end = document.getElementById("editEnd").value;
-    routine.note = document.getElementById("editNote").value.trim();
-
-    saveData();
-    document.getElementById("editDialog").close();
-    renderHome();
-  }
-});
-
-// Calendar
-const calendarDate = document.getElementById("calendarDate");
-
-calendarDate.addEventListener("change", renderCalendar);
-
-function renderCalendar() {
-  const date = calendarDate.value || todayKey();
-  calendarDate.value = date;
-
-  const routines = data[date] || [];
-  const container = document.getElementById("calendarRoutines");
-
-  container.innerHTML = "";
-
-  if (!routines.length) {
-    container.innerHTML = "<p>No routines for this date.</p>";
-    return;
-  }
-
-  routines.forEach(routine => {
-    const div = document.createElement("div");
-    div.className = "card routine-item";
-
-    div.innerHTML = `
-      <strong>${escapeHTML(routine.name)}</strong>
-      <div>${routine.start} - ${routine.end}</div>
-      ${routine.completed ? "<small>✓ Completed</small>" : "<small>Not completed</small>"}
-    `;
-
-    container.appendChild(div);
-  });
-}
-
-// Stats
-function renderStats() {
-  let total = 0;
-  let completed = 0;
-
-  Object.values(data).forEach(day => {
-    total += day.length;
-    completed += day.filter(r => r.completed).length;
-  });
-
-  const percent = total ? Math.round((completed / total) * 100) : 0;
-
-  document.getElementById("totalRoutines").textContent = total;
-  document.getElementById("completedRoutines").textContent = completed;
-  document.getElementById("avgProgress").textContent = `${percent}%`;
-
-  const bestDay = Object.values(data).reduce(
-    (best, day) => Math.max(best, day.filter(r => r.completed).length),
-    0
-  );
-
-  document.getElementById("streak").textContent = bestDay;
-
-  const recent = document.getElementById("recentStats");
-  recent.innerHTML = "";
-
-  Object.keys(data)
-    .sort()
-    .reverse()
-    .slice(0, 7)
-    .forEach(date => {
-      const routines = data[date];
-      const done = routines.filter(r => r.completed).length;
-
-      const row = document.createElement("div");
-      row.innerHTML = `<p><strong>${date}</strong> — ${done}/${routines.length} completed</p>`;
-      recent.appendChild(row);
-    });
-}
-
-// Settings
-function renderSettings() {
-  document.getElementById("notifications").checked =
-    settings.notifications || false;
-
-  document.getElementById("darkMode").checked =
-    settings.darkMode || false;
-
-  document.body.classList.toggle("dark", settings.darkMode);
-}
-
-document.getElementById("notifications").addEventListener("change", function () {
-  settings.notifications = this.checked;
-  saveSettings();
-});
-
-document.getElementById("darkMode").addEventListener("change", function () {
-  settings.darkMode = this.checked;
-  saveSettings();
-  document.body.classList.toggle("dark", this.checked);
-});
-
-// Delete all data
-document.getElementById("clearData").addEventListener("click", function () {
-  if (confirm("Are you sure you want to delete all routine data?")) {
-    data = {};
-    saveData();
-    renderHome();
-    alert("All routine data deleted.");
-  }
-});
-
-// Basic protection for text entered by user
-function escapeHTML(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// Start app
-renderHome();
+  </div>    <dialog id="editDialog">  
+    <form method="dialog" id="editForm" class="edit-form">  
+      <h3>Edit Routine</h3>  
+      <input id="editName" required maxlength="60">  
+      <div class="time-row"><input id="editStart" type="time" required><input id="editEnd" type="time" required></div>  
+      <input id="editNote" maxlength="80">  
+      <div class="dialog-actions">  
+        <button value="cancel" class="secondary">Cancel</button>  
+        <button value="save" class="primary">Save changes</button>  
+      </div>  
+    </form>  
+  </dialog>  <script src="script.js"></script>  </body>  
+   </html>
