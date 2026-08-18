@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#5b21b6">
+  <meta name="description" content="Daily Routine planner">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg">
+  <link rel="stylesheet" href="style.css">
+  <title>DailyRoutine</title>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">DailyRoutine</div>
+      <button class="more" id="installBtn" hidden title="Install app">⋮</button>
+    </header>
+
+    <main id="main">
+      <section class="page" id="homePage">
+        <div class="today-head">
+          <div class="calendar-icon">▦</div>
+          <div>
+            <h1>Today</h1>
+            <p id="dateText"></p>
+          </div>
+        </div>
+
+        <section class="card add-card">
+          <div class="section-title"><span class="plus">+</span> ADD NEW ROUTINE</div>
+          <form id="routineForm">
+            <input id="routineName" maxlength="60" placeholder="Routine Name (e.g. Gym, Study)" required>
+            <div class="time-row">
+              <input id="startTime" type="time" required>
+              <input id="endTime" type="time" required>
+            </div>
+            <input id="routineNote" maxlength="80" placeholder="Short description (optional)">
+            <button class="primary" type="submit">SAVE ROUTINE</button>
+          </form>
+        </section>
+
+        <section class="list-section">
+          <div class="section-title list-title">☷ TODAY'S ROUTINES <span id="countLabel"></span></div>
+          <div id="routineList"></div>
+          <div id="emptyState" class="empty" hidden>No routines yet. Add your first routine above.</div>
+        </section>
+
+        <section class="card progress-card">
+          <div>
+            <div class="progress-title">TODAY PROGRESS</div>
+            <div class="progress-line">
+              <div class="bar"><span id="progressBar"></span></div>
+              <b id="progressText">0 / 0 Completed</b>
+            </div>
+          </div>
+          <div class="donut" id="donut"><span id="percentText">0%</span></div>
+        </section>
+      </section>
+
+      <section class="page" id="calendarPage" hidden>
+        <div class="simple-head"><h2>Calendar</h2><p>Your saved routines by date.</p></div>
+        <div class="card calendar-card">
+          <input id="calendarDate" type="date">
+          <div id="calendarRoutines"></div>
+        </div>
+      </section>
+
+      <section class="page" id="statsPage" hidden>
+        <div class="simple-head"><h2>Stats</h2><p>Your routine completion overview.</p></div>
+        <div class="stats-grid">
+          <div class="card stat"><strong id="totalRoutines">0</strong><span>Total routines</span></div>
+          <div class="card stat"><strong id="completedRoutines">0</strong><span>Completed</span></div>
+          <div class="card stat"><strong id="streak">0</strong><span>Best day</span></div>
+          <div class="card stat"><strong id="avgProgress">0%</strong><span>Overall progress</span></div>
+        </div>
+        <div class="card">
+          <div class="section-title">RECENT DAYS</div>
+          <div id="recentStats"></div>
+        </div>
+      </section>
+
+      <section class="page" id="settingsPage" hidden>
+        <div class="simple-head"><h2>Settings</h2><p>Customize your DailyRoutine.</p></div>
+        <div class="card settings">
+          <label class="setting-row"><span>Notifications</span><input id="notifications" type="checkbox"></label>
+          <label class="setting-row"><span>Dark mode</span><input id="darkMode" type="checkbox"></label>
+          <button class="danger-btn" id="clearData">Delete all routine data</button>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav active" data-page="homePage"><span>⌂</span><small>Home</small></button>
+      <button class="nav" data-page="calendarPage"><span>▣</span><small>Calendar</small></button>
+      <button class="nav" data-page="statsPage"><span>▥</span><small>Stats</small></button>
+      <button class="nav" data-page="settingsPage"><span>⚙</span><small>Settings</small></button>
+    </nav>
+  </div>
+
+  <dialog id="editDialog">
+    <form method="dialog" id="editForm" class="edit-form">
+      <h3>Edit Routine</h3>
+      <input id="editName" required maxlength="60">
+      <div class="time-row"><input id="editStart" type="time" required><input id="editEnd" type="time" required></div>
+      <input id="editNote" maxlength="80">
+      <div class="dialog-actions">
+        <button value="cancel" class="secondary">Cancel</button>
+        <button value="save" class="primary">Save changes</button>
+      </div>
+    </form>
+  </dialog>
+
+<script src="script.js"></script>
+</body>
+</html>
